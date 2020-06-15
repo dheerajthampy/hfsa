@@ -60,6 +60,10 @@ class SummaryReportCommand extends AbstractReportCommand {
     }
 
     static class OverallStats extends AbstractStats {
+        int sumAclFiles;
+        int sumAclDirectories;
+        int sumNonAclFiles;
+        int sumNonAclDirectories;
     }
 
     static class Report {
@@ -172,14 +176,22 @@ class SummaryReportCommand extends AbstractReportCommand {
         out.println(header2ndLine);
         out.println(FormatUtil.padRight('-', header2ndLine.length()));
 
-        out.println(String.format("%8d | %11d | %12d | %9d | %10d | %9d | %9d | %s",
-                report.groupStats.size(), report.userStats.size(),
-                overallStats.sumDirectories.longValue(), overallStats.sumSymLinks.longValue(),
-                overallStats.sumFiles, overallStats.sumFileSize / 1024L / 1024L,
-                overallStats.sumBlocks,
-                String.format(bucketFormatValue,
-                        FormatUtil.boxAndPadWithZeros(maxLength.length, overallStats.fileSizeBuckets.get()))
-        ));
+        out.print(
+                "Directories " + overallStats.sumDirectories.longValue() + "\n" +
+                        "Files: " + overallStats.sumFiles + "\n" +
+                        "Acl files " + overallStats.sumAclFiles + "\n" +
+                        "Non Acl files " + overallStats.sumNonAclFiles + "\n" +
+                        "Acl Directories " + overallStats.sumAclDirectories + "\n" +
+                        "Non Acl Directories " + overallStats.sumNonAclDirectories + "\n");
+
+//        out.println(String.format("%8d | %11d | %12d | %9d | %10d | %9d | %9d | %s",
+//                report.groupStats.size(), report.userStats.size(),
+//                overallStats.sumDirectories.longValue(), overallStats.sumSymLinks.longValue(),
+//                overallStats.sumFiles, overallStats.sumFileSize / 1024L / 1024L,
+//                overallStats.sumBlocks,
+//                String.format(bucketFormatValue,
+//                        FormatUtil.boxAndPadWithZeros(maxLength.length, overallStats.fileSizeBuckets.get()))
+//        ));
         out.println();
 
         // Groups
@@ -249,6 +261,11 @@ class SummaryReportCommand extends AbstractReportCommand {
                     overallStats.sumBlocks += fileBlocks;
                     overallStats.sumFileSize += fileSize;
                     overallStats.sumFiles++;
+
+                    if (p.getPermission().getStickyBit())
+                        overallStats.sumAclFiles++;
+                    else
+                        overallStats.sumNonAclFiles++;
                 }
 
                 // Group stats
@@ -288,6 +305,11 @@ class SummaryReportCommand extends AbstractReportCommand {
                 userStat.sumDirectories.increment();
 
                 overallStats.sumDirectories.increment();
+
+                if (p.getPermission().getStickyBit())
+                    overallStats.sumAclDirectories++;
+                else
+                    overallStats.sumNonAclDirectories++;
             }
 
             @Override
